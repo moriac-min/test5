@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    - DispatcherServlet application context for Application's web tier.
+-->
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:p="http://www.springframework.org/schema/p" xmlns:context="http://www.springframework.org/schema/context"
+        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+                http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+    <!--
+        - The controllers are autodetected POJOs labeled with the @Controller annotation.
+    -->
+    <context:component-scan base-package="kr.or.kpetro,resources">
+        <context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Service"/>
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Repository"/>
+    </context:component-scan>
+ 
+    <!-- 
+	Controller에서 화면(JSP) 입력값을 받기 위해서 일반적으로 Command(Form Class) 객체를 사용하지만,
+	Map 객체를 사용하는걸 선호할 수 있다.
+	org.springframework.web.bind.support.WebArgumentResolver의 구현클래스인 CommandMapArgumentResolver은
+	HTTP request 객체에 있는 파라미터이름과 값을 Map 객체에 담아 Controller에서 사용도록 제공한다.
+	 -->
+	<bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter">
+		<property name="webBindingInitializer">
+			<bean class="kr.or.kpetro.com.cmm.web.EgovBindingInitializer"/>
+		</property>
+		<property name="customArgumentResolvers">
+			<list>
+				<bean class="egovframework.rte.ptl.mvc.bind.CommandMapArgumentResolver"/>
+			</list>
+		</property>
+	</bean>
+    
+   	<!-- 로그인 체크가 필요한 URL과 로그인 여부를 체크해줄 인터셉터를 등록한다. -->
+	<bean id="selectAnnotaionMapper" class="egovframework.rte.ptl.mvc.handler.SimpleUrlAnnotationHandlerMapping" p:order="1">
+		<property name="interceptors">
+			<list>
+				<!-- 로그인 체크 
+				<ref local="authenticInterceptor" /> -->
+				<!-- 라이센스 체크 -->
+				<ref local="licenseCheckInterceptor" /> 
+				<!-- IP 정보기록 -->
+				<ref local="IpObtainInterceptor" />  
+			</list>
+		</property>
+		<!-- 체크가 필요한 URL 리스트  -->
+		<property name="urls">
+			<set>
+				<value>/**/*.do</value>
+			</set>
+		</property>
+	</bean>
+	
+	<!-- 라이센스 체크 인터셉터 -->
+	<bean id="licenseCheckInterceptor" class="kr.or.kpetro.com.cmm.interceptor.LicenseCheckInterceptor">
+		<property name="permittedURL">
+			<set>
+				<value>/AuthReq.do</value>
+				<value>/Auth.do</value>
+				<value>/SMain.do</value>
+				<value>/Init.do</value>
+			</set>
+		</property>
+	</bean>
+ 
+	<!-- IP 정보 기록 -->
+	<bean id="IpObtainInterceptor" class="kr.or.kpetro.com.cmm.interceptor.IpObtainInterceptor" />    
+    
+  	<bean class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+		<property name="defaultErrorView" value="com/cmm/error/egovError"/>
+		<property name="exceptionMappings">
+			<props>
+				<prop key="org.springframework.dao.DataAccessException">com/cmm/error/dataAccessFailure</prop>
+				<prop key="org.springframework.transaction.TransactionException">com/cmm/error/dataAccessFailure</prop>
+				<prop key="egovframework.rte.fdl.cmmn.exception.EgovBizException">com/cmm/error/egovBizException</prop>
+				<prop key="org.springframework.web.HttpSessionRequiredException">com/cmm/error/EgovLoginUsr</prop>
+			</props>
+		</property>
+	</bean>
+	
+	<!-- ============================================================= -->
+    <!-- Tiles 2                                                       -->
+    <!-- ============================================================= -->
+	<bean id="tilesConfigurer" class="org.springframework.web.servlet.view.tiles2.TilesConfigurer">
+		<property name="definitions">
+			<list>
+				<value>/WEB-INF/config/tiles2def/**/*.xml</value>
+			</list>
+		</property>
+	</bean>
+	<bean id="beanNameResolver" class="org.springframework.web.servlet.view.BeanNameViewResolver" p:order="0" />
+	<bean id="tilesViewResolver" class="org.springframework.web.servlet.view.UrlBasedViewResolver">
+		<property name="viewClass" value="org.springframework.web.servlet.view.tiles2.TilesView" />
+		<property name="order" value="1"/>
+	</bean>    
+	<bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+		<property name="prefix" value="/WEB-INF/jsp/"/>
+		<property name="suffix" value=".jsp"/>
+		<property name="order" value="2" />
+	</bean>
+	
+    <!-- ============================================================= -->
+    <!--  JSON 뷰                                                      -->
+    <!-- ============================================================= -->
+	<bean id="jsonView" class="org.springframework.web.servlet.view.json.MappingJacksonJsonView">
+	<property name="objectMapper" ref="configObjectMapper"/>
+	</bean>
+	
+	<bean id="configObjectMapper" class="kr.or.kpetro.svr.cmm.view.ConfigObjectMapper"/>
+	
+	<!-- Server Processor -->
+	<bean id="initializeProcessor" class="kr.or.kpetro.svr.mdwr.processor.InitializeProcessor"/>
+	<bean id="receiveShipmentProcessor" class="kr.or.kpetro.svr.mdwr.processor.ReceiveShipmentProcessor"/>
+	<bean id="mainInfomationProcessor" class="kr.or.kpetro.svr.mdwr.processor.MainInfomationProcessor"/>
+	<bean id="systemManagementProcessor" class="kr.or.kpetro.svr.mdwr.processor.SystemManagementProcessor"/>
+	<bean id="processorManager" class="kr.or.kpetro.svr.mdwr.processor.ProcessorManager">
+		<property name="serviceType">
+			<map>
+				<entry key="MW01" value-ref="initializeProcessor"/>
+				<entry key="MW02" value-ref="mainInfomationProcessor"/>
+				<entry key="MW03" value-ref="receiveShipmentProcessor"/>
+				<entry key="MW04" value-ref="systemManagementProcessor"/>
+			</map>
+		</property>
+	</bean>
+</beans>

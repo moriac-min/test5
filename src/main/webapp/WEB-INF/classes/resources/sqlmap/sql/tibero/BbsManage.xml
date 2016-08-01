@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+
+
+<sqlMap namespace="BbsManage">
+
+	<typeAlias alias="egovMap" type="egovframework.rte.psl.dataaccess.util.EgovMap"/>
+	<typeAlias alias="bbsVO" type="kr.or.kpetro.std.service.BbsVO"/>
+	<typeAlias alias="bbsMasterVO" type="kr.or.kpetro.std.service.BbsMasterVO"/>
+<select id="bbsManageDAO.selectBbsManageList" parameterClass="bbsMasterVO" resultClass="bbsVO">
+select 
+	s2.*
+from 
+(
+		select 
+			rownum rnum
+		,	s1.*
+		from 
+		(	
+				SELECT 
+					A.NTT_ID idx,
+					A.NTT_SJ subject,
+					A.NTCR_ID,
+					A.NTCR_NM registerNm,
+					A.FRST_REGISTER_PNTTM registDate,
+					A.INQIRE_CO hit,
+					A.PARNTS_NO,
+					A.REPLY_AT,
+					A.NTCE_AT,
+					A.USE_AT,
+					A.ATCH_FILE_ID,
+					DECODE(A.ATCH_FILE_ID, NULL, 'N', 'Y') AS ATCH_FILE_AT,
+					A.BBS_ID bbsId,
+					C.CODE_NM AS STATUS_CODE_NM,
+					#bbsUrl#||#bbsId# ||'&amp;nttId='||NTT_ID url
+				FROM COMTNBBS A
+				INNER JOIN TB_COM_CODE C ON A.STATUS_CODE = C.CODE_ID AND C.GROUP_CODE_ID = 'COM028'
+				WHERE A.BBS_ID = #bbsId#
+				AND A.REPLY_AT = 'N'	
+				AND A.USE_AT = 'Y'
+				order by
+					NTCE_AT
+				,	SORT_ORDR DESC 
+			)s1
+			where rownum &lt;=  #findex# + #ppage#
+)s2
+where rnum &gt;= #findex# + 1
+	</select>
+</sqlMap>

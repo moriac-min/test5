@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="MiddlewareLoginDAO">
+
+	<typeAlias  alias="BusinessPlaceLicenseVO" type="kr.or.kpetro.svr.service.BusinessPlaceLicenseVO"/>
+	<typeAlias  alias="EgovMap" type="egovframework.rte.psl.dataaccess.util.EgovMap"/>
+	<!-- 로그인정보 공통 loginDAO.actionLogin -->
+<select id="MiddlewareLoginDAO.selectLoginCheck" parameterClass="BusinessPlaceLicenseVO" resultClass="BusinessPlaceLicenseVO">
+SELECT /* MiddlewareLoginDAO.selectLoginCheck */
+	esntl_id esntlId
+,	USER_ID userId
+,	decode(PASSWD, #userPassword#, 1,0) passwordCheck
+FROM TB_COM_USER
+WHERE USER_ID = #userId#
+AND USER_STTUS_CODE = 'P'
+</select>
+<!--  로그인정보 공통 loginDAO.actionLoginPki --> 	
+<select id="MiddlewareLoginDAO.selectLoginCheckPKI" parameterClass="BusinessPlaceLicenseVO" resultClass="BusinessPlaceLicenseVO">
+SELECT /*MiddlewareLoginDAO.selectLoginCheckPKI */
+	esntl_id  esntlId
+,	USER_ID userId
+,	1 passwordCheck
+FROM TB_COM_USER
+WHERE CRTFC_DN = #crtfcDn#
+AND USER_STTUS_CODE = 'P'
+ 	</select>
+</sqlMap>

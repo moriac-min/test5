@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+<!-- 
+	수정일                 수정자                          수정내용
+  =========     =======    =================================================
+  2011.10.17   	서준식     	 	OCCRRNC_DE 컬럼과 날짜 비교문에 RTRIM 함수 적용
+
+-->
+<sqlMap namespace="SysLog">
+
+	<typeAlias alias="egovMap" type="egovframework.rte.psl.dataaccess.util.EgovMap" />
+	<!-- 시스템로그 VO -->
+	<typeAlias alias="sysLog" type="kr.or.kpetro.com.sym.log.lgm.service.SysLog" />
+
+	<!-- 시스템로그 맵 -->
+	<resultMap id="SysLogVO" class="kr.or.kpetro.com.sym.log.lgm.service.SysLog">
+		<result property="requstId" column="REQUST_ID" />
+		<result property="occrrncDe" column="OCCRRNC_DE" />
+		<result property="srvcNm" column="SVC_NM" />
+		<result property="methodNm" column="METHOD_NM" />
+		<result property="processSeCode" column="PROCESS_SE_CODE" />
+		<result property="processSeCodeNm" column="PROCESS_SE_CODE_NM" />
+		<result property="processTime" column="PROCESS_TIME" />
+		<result property="rqesterIp" column="RQESTER_IP" />
+		<result property="rqesterId" column="RQESTER_ID" />
+		<result property="rqsterNm" column="RQESTER_NM" />
+		<result property="serverNm" column="SERVER_NM" />
+	</resultMap>
+
+	<!-- 시스템 로그 등록 -->
+	<insert id="SysLogDAO.logInsertSysLog" parameterClass="sysLog">
+		<![CDATA[ 
+			INSERT INTO COMTNSYSLOG
+				( REQUST_ID
+				  , SVC_NM
+				  , METHOD_NM
+				  , PROCESS_SE_CODE
+				  , PROCESS_TIME
+				  , RQESTER_ID
+				  , RQESTER_IP
+				  , OCCRRNC_DE 
+				  , SERVER_NM)
+			VALUES ( #requstId#
+				  , #srvcNm#
+				  , #methodNm#
+				  , #processSeCode#
+				  , #processTime#
+				  , #rqesterId#
+				  , #rqesterIp#
+				  , TO_CHAR(sysdate, 'YYYYMMDD')
+				  , #serverNm#)
+		]]>
+	</insert>
+</sqlMap>
+

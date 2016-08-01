@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+<!-- 시스템초기화 -->
+<sqlMap namespace="DataUpdateDAO">
+	<typeAlias  alias="SystemCodeVO" type="kr.or.kpetro.svr.mdwr.init.service.SystemCodeVO"/>
+	<!-- 시스템공통코드를 리턴한다. -->
+<select id="DataUpdateDAO.selectSystemCode" parameterClass="SystemCodeVO" resultClass="SystemCodeVO">
+/*DataUpdateDAO.selectSystemCode*/	
+select 
+	group_code_id cate
+,	code_id code
+,	code_nm val
+from tb_com_code
+where
+	use_at = 'Y'
+<isNotEmpty property="seCode">
+and	code_se_code6 in ('ALL', #seCode#)
+</isNotEmpty>
+and	group_code_id in
+<iterate property="cates" open="(" close=")" conjunction=",">
+	#cates[]#
+</iterate>
+</select>
+</sqlMap>

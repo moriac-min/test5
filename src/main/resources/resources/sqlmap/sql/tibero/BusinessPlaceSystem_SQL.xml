@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="BusinessPlaceSystemDAO">
+
+	<typeAlias  alias="MiddlewareConnectingLogVO" type="kr.or.kpetro.svr.service.MiddlewareConnectingLogVO"/>
+	<typeAlias  alias="EgovMap" type="egovframework.rte.psl.dataaccess.util.EgovMap"/>
+	<typeAlias  alias="MdwrVO" type="kr.or.kpetro.svr.service.MdwrVO"/>
+	<typeAlias  alias="MdwrServerVO" type="kr.or.kpetro.svr.service.MdwrServerVO"/>
+	<typeAlias  alias="BusinessPlaceLicenseVO" type="kr.or.kpetro.svr.service.BusinessPlaceLicenseVO"/>
+	<typeAlias  alias="BusinessPlaceInfoVO" type="kr.or.kpetro.svr.service.BusinessPlaceInfoVO"/>
+	
+ 	<!-- 사업장목록조회 수급보고자_사업장_관계 테이블 내, 해당 아이디의 사업장정보를 리턴한다.-->
+ 	<insert id="BusinessPlaceSystemDAO.insert" parameterClass="MiddlewareConnectingLogVO">
+		<selectKey resultClass="int" keyProperty="conectSttusLogSn">
+		select 
+			nvl(max(conect_sttus_log_sn),0)+1 
+		from
+			tb_imw_mdwr_sttus_log
+		where
+			bplc_id = #bplcId#
+		and	conect_sttus_manage_day = to_char(sysdate,'yyyymmdd')
+		</selectKey>
+		insert into tb_imw_mdwr_sttus_log
+		(
+			bplc_id
+		,	LAGREE_SN
+		,	conect_sttus_manage_day
+		,	conect_sttus_log_sn
+		,	conect_report_date
+		,	trnsmis_succes_co
+		,	trnsmis_error_co
+		,	avrg_succes_ve_secnd
+		, 	avrg_error_ve_secnd
+		,	conect_log_creat_pd_secnd
+		,	register_id
+		,	regist_date
+		,	regist_ip
+		)
+		values
+		(
+			#bplcId#
+		,	#lagreeSn#
+		,	to_char(sysdate,'yyyymmdd')
+		,	#conectSttusLogSn#
+		,	sysdate
+		,	#trnsmisSucessCo#
+		,	#trnsmisErrorCo#
+		,	#avrgSucessVeSe#
+		,	#avrgErrorVeSe#
+		,	#conectLogCreatPdSe#
+		,	#userId#
+		,	sysdate
+		,	#userIp#
+		)
+	</insert>
+	
+<select id="BusinessPlaceSystemDAO.selectCurrentReportFx" resultClass="EgovMap" parameterClass="BusinessPlaceLicenseVO">
+select 
+	t_a.report_wkno
+,	t_a.report_wkno_use_at
+,	t_a.report_pd_begin_day 
+,	t_a.report_pd_end_day
+,	t_b.report_style_ver_sn
+,	t_a.report_year
+,	t_a.spldmd_report_clos_day
+from
+(
+select report_wkno
+,	report_wkno_use_at
+,	report_pd_begin_day 
+,	report_pd_end_day
+,	report_year
+,	spldmd_report_clos_day
+,	(
+		select max(appl_report_tme_id || report_style_ver_sn)
+		from 
+			tb_imw_spldmd_report_style b
+		where
+			b.appl_report_tme_id &lt;= a.report_tme_id
+		and	b.report_style_se_code = #reportStyleSeCode#
+		and	b.report_style_use_at = 'Y'
+	) reportStyleApplDate
+from tb_imw_spldmd_report_fx a
+where 
+	report_wkno_use_at = 'Y'
+and	report_pd_begin_day &lt;= to_char(sysdate,'yyyymmdd')
+and	report_pd_end_day &gt;= to_char(sysdate,'yyyymmdd')
+)t_a
+,	tb_imw_spldmd_report_style t_b
+where
+	t_a.reportStyleApplDate = t_b.appl_report_tme_id || t_b.report_style_ver_sn
+and	t_b.report_style_se_code = #reportStyleSeCode#
+and t_b.report_style_use_at = 'Y'
+</select>
+ <!-- 미열람 공지사항 갯수 -->	
+ 	<select id="BusinessPlaceSystemDAO.selectNotReadNoticeCount" resultClass="Integer" parameterClass="EgovMap">
+select count(*) from
+COMTNBBS
+where BBS_ID = #bbsId#
+and USE_AT = 'Y'
+and	REPLY_AT = 'N'	
+and FRST_REGISTER_PNTTM &gt; #lastReadDttm#
+ 	</select>
+ 	
+ 	<select id="BusinessPlaceSystemDAO.selectCurrentTime" resultClass="java.util.Date">
+ 	select sysdate
+ 	from dual
+ 	</select>
+ 	
+ 	<select id="BusinessPlaceSystemDAO.selectCurrentYear" resultClass="String">
+ 	/*BusinessPlaceSystemDAO.selectCurrentYear*/
+ 	select to_char(sysdate,'yyyy')
+ 	from dual
+ 	</select>
+ 	
+ 	<!-- 미들웨어목록조회 -->
+ 	<select id="BusinessPlaceSystemDAO.selectMiddlewareList" resultClass="MdwrVO">
+ select
+	mdwr_ver_id mdwrVerId
+,	mdwr_wdtb_date mdwrWdtbDay
+,	mdwr_file_size mdwrFileSize
+,	mdwr_detail_cn mdwrDetailCn
+from
+	tb_imw_mdwr
+where
+	mdwr_othbc_at = 'Y'
+order by
+	mdwr_ver_id desc
+ 	</select>
+ 	
+ 	<!-- 미들웨어서버목록조회 -->
+ 	<select id="BusinessPlaceSystemDAO.selectMiddlewareServerList" resultClass="MdwrServerVO">
+ select
+	cntc_server_id cntcServerId
+,	cntc_server_nm cntcServerNm
+,	cntc_server_ip cntcServerIp
+,	cntc_server_port_no cntcServerPortNo
+from
+	tb_imw_mdwr_server t_a
+where
+	t_a.cntc_server_use_at = 'Y'
+and	t_a.cntc_server_se_code = '01'
+order by
+	cntc_server_id
+ 	</select>
+ 	
+ <!--사용자정보조회-->
+ <select id="BusinessPlaceSystemDAO.selectMiddlewareUser" resultClass="BusinessPlaceInfoVO" parameterClass="BusinessPlaceInfoVO">
+select
+	a.user_Nm userNm
+,	a.user_Id userId
+, ( SELECT CODE_NM FROM TB_COM_CODE WHERE d.cmpny_se_code = CODE_ID AND GROUP_CODE_ID = 'ENT_GBN' ) AS userSeNm
+,	a.mbtlnum mbtlnum
+,	a.email_Adres emailAdres
+,	nvl(c.atmc_trnsmis_at,'N') atmcTrnsmisAt
+,	e.bizrno
+,	e.rprsntv_nm rprsntvNm
+,	e.rprsntv_brthdy rprsntvBrthdy
+,	e.rprsntv_bdigt_ihidnum rprsntvBdigtIhidnum
+,	e.bsnm_regist_de bsnmRegistDe
+,	e.RPRSNTV_DETAIL_ADRES rprsntvAdres
+,	d.bsns_begin_de  bsnsBeginDe/*사업개시일자*/
+,	( SELECT CODE_NM FROM TB_COM_CODE WHERE CODE_ID = d.BIZCND_CODE AND GROUP_CODE_ID = 'UPTAE_CODE' ) bizcndNm /*업태*/
+,	( SELECT CODE_NM FROM TB_COM_CODE WHERE CODE_ID = d.INDUTY_CODE AND GROUP_CODE_ID LIKE 'UPJONG%' ) indutyNm /*업종*/
+,	d.bplc_id bplcId/*사업장아이디*/
+,	d.cmpnm cmpnm/*상호명*/
+,	( SELECT CODE_NM FROM TB_COM_CODE WHERE CODE_ID = d.SIGUN_CODE AND GROUP_CODE_ID = 'SI_GUN_GU' ) sigunNm /* 시군코드*/
+,	d.buld_manage_no buldManageNo/*건물관리번호*/
+,	d.pole_se_code poleSeCode/*pole 구분*/
+/*--,	decode(d.FRUG_ENTRPS_SE_CODE,null,'N','Y') frugEntrpsSeYn 알뜰여부*/
+/*--,	( SELECT CODE_NM FROM TB_COM_CODE WHERE CODE_ID=d.FRUG_ENTRPS_SE_CODE AND GROUP_CODE_ID = 'SANGPYO_CODE' ) frugEntrpsSeNm 알뜰업체구분 sangpyo_code*/
+/*,	d.x_crdnt_value xCrdntValue*/
+/*,	d.y_crdnt_value yCrdntValue좌표값*/
+,	d.detail_adres detailAdres/*상세주소*/
+from
+	tb_com_user a
+inner join
+	tb_mas_spldmd_reportr_bplc_rel b
+on	a.esntl_id = b.user_id
+inner join
+	tb_imw_mdwr_lcns c
+on	b.bplc_id = c.bplc_id
+inner join
+	tb_mas_bplc d
+on	b.bplc_id = d.bplc_id
+inner join
+	tb_mas_cxfc e
+on	d.rprsntv_id = e.rprsntv_id
+where c.lagree_sn = (
+			select max(lagree_sn)
+			from
+				tb_imw_mdwr_lcns b
+			where 
+				b.bplc_id = c.bplc_id
+			and use_begin_date &lt;= sysdate
+			)
+and	c.bplc_id = #bplcId#
+and	a.esntl_id = #userId#
+ 	</select>
+ 	
+<update id="BusinessPlaceSystemDAO.updateAutomaticTransmit">
+update tb_imw_mdwr_lcns a set atmc_trnsmis_at =#atmcTrnsmisAt#
+where 
+ lagree_sn = (
+			select max(lagree_sn)
+			from
+				tb_imw_mdwr_lcns b
+			where 
+				b.bplc_id = a.bplc_id
+			and use_begin_date &lt;= sysdate
+			)
+and bplc_id = #bplcId#
+</update>
+
+<!-- 접속통계검색년도 -->
+  <select id="BusinessPlaceSystemDAO.selectConnectingYear" resultClass="EgovMap"  parameterClass="BusinessPlaceLicenseVO">
+ select 
+	distinct(substr(conect_sttus_manage_day,1,4)) conect_Year
+from
+	tb_imw_mdwr_sttus_log
+where
+	bplc_id = #bplcId#
+UNION 
+	SELECT
+		TO_CHAR(SYSDATE, 'YYYY')
+	FROM
+		DUAL
+  </select>	
+  <!-- 접속통계검색월 -->
+  <select id="BusinessPlaceSystemDAO.selectConnectingMonth" resultClass="EgovMap" parameterClass="BusinessPlaceLicenseVO">
+select 
+	distinct(substr(conect_sttus_manage_day,5,2)) conect_Month
+from
+	tb_imw_mdwr_sttus_log
+where
+	bplc_id = #bplcId#
+and substr(conect_sttus_manage_day,1,4) = #srchWord#
+UNION
+	SELECT
+		TO_CHAR(SYSDATE, 'MM')
+	FROM DUAL
+  </select>	 
+ <!-- 접속통계목록  -->
+  <select id="BusinessPlaceSystemDAO.selectConnectingStats" resultClass="MiddlewareConnectingLogVO" parameterClass="BusinessPlaceLicenseVO">
+select
+	conect_sttus_manage_day conectSttusManageDay
+,	count(conect_sttus_log_sn)  conectSttusLogSn
+,	sum(trnsmis_succes_co+trnsmis_error_co) trnsmisTotalCo
+,	sum(trnsmis_succes_co) trnsmisSucessCo
+,	sum(trnsmis_error_co) trnsmisErrorCo
+,	avg(avrg_succes_ve_secnd) avrgSucessVeSe
+,	avg(avrg_error_ve_secnd) avrgErrorVeSe
+from
+	tb_imw_mdwr_sttus_log
+where
+	bplc_id =#bplcId#
+and	substr(conect_sttus_manage_day,1,6) = #srchWord#
+group by
+	conect_sttus_manage_day
+order by
+	conect_sttus_manage_day desc
+  </select>	
+
+   <!-- 접속통계일별목록  -->
+  <select id="BusinessPlaceSystemDAO.selectConnectingDailyLogs" resultClass="MiddlewareConnectingLogVO" parameterClass="BusinessPlaceLicenseVO">
+ select
+	conect_report_date conectReportDate
+,	conect_sttus_log_sn conectSttusLogSn
+,	(trnsmis_succes_co+trnsmis_error_co) trnsmisTotalCo
+,	(trnsmis_succes_co) trnsmisSucessCo
+,	(trnsmis_error_co) trnsmisErrorCo
+,	(avrg_succes_ve_secnd) avrgSucessVeSe
+,	(avrg_error_ve_secnd) avrgErrorVeSe
+from
+	tb_imw_mdwr_sttus_log
+where
+	bplc_id = #bplcId#
+and	conect_sttus_manage_day = #srchWord#
+  </select>	
+  
+  <select id="BusinessPlaceSystemDAO.selectSupplyDemandBusinessPlaceInfo" resultClass="EgovMap" parameterClass="String">
+SELECT	
+		C.CMPNM AS CPR_NM
+		, A.RPRSNTV_NM AS RPRSNTV_NM
+		, E.SIDO_NAME || ' ' || E.SIGUN_NAME || ' ' || E.ROAD_NAME || ' ' || D.BLDG_NO1 || ', ' || C.DETAIL_ADRES AS BPLC_LOCPLC
+		, C.SIGUN_CODE AS SPLDMD_LOCPLC_CODE
+		, C.BIZCND_CODE AS SPLDMD_BIZCND_CODE
+		, C.BPLC_ID AS SPLDMD_PORTAL_BPLC_ID
+		, '' AS CBPLC_NO
+		, A.BIZRNO
+FROM	TB_MAS_CXFC A
+		INNER JOIN TB_MAS_CXFC_BPLC_REL B
+		ON 	A.RPRSNTV_ID = B.RPRSNTV_ID
+		AND TO_CHAR(SYSDATE, 'YYYYMMDD') BETWEEN B.APPLC_BEGIN_DE AND B.APPLC_END_DE
+		INNER JOIN TB_MAS_BPLC C
+		ON 	B.BPLC_ID = C.BPLC_ID
+		LEFT OUTER JOIN TB_COM_ROAD_ADDR D
+		ON 	C.BULD_MANAGE_NO = D.NUM
+		INNER JOIN TB_COM_ROAD E
+		ON 	D.ROAD_CODE = E.ROAD_CODE
+		AND D.EUP_SEQ 	= E.EUP_SEQ		
+		
+WHERE	1 = 1 
+AND		REPLACE(A.BIZRNO, '-', '')	=#bsnsNo#
+ORDER BY C.BPLC_ID DESC
+  </select>
+  
+  
+</sqlMap>

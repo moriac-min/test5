@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMapConfig PUBLIC "-//iBATIS.com//DTD SQL Map Config 2.0//EN"
+    "http://www.ibatis.com/dtd/sql-map-config-2.dtd">
+
+<sqlMapConfig>
+<sqlMap resource="resources/sqlmap/sql/tibero/SmartUpdater_SQL.xml"/>
+<sqlMap resource="resources/sqlmap/sql/tibero/MiddlewareLogin_SQL.xml"></sqlMap>
+<sqlMap resource="resources/sqlmap/sql/tibero/BusinessPlaceLicense_SQL.xml"></sqlMap>
+<sqlMap resource="resources/sqlmap/sql/tibero/BusinessPlaceSystem_SQL.xml"></sqlMap>
+<sqlMap resource="resources/sqlmap/sql/tibero/ReceiveShipment_SQL.xml"></sqlMap>
+<sqlMap resource="resources/sqlmap/sql/tibero/BbsManage.xml"></sqlMap><!-- 기준정보 공통게시판 SQL -->
+<sqlMap resource="resources/sqlmap/sql/tibero/BbsMaster.xml"></sqlMap><!-- 기준정보 공통게시판 설정 SQL -->
+<sqlMap resource="resources/sqlmap/sql/tibero/EgovSysLog_SQL.xml"></sqlMap><!-- 공통 시스템로그SQL -->
+<sqlMap resource="resources/sqlmap/sql/tibero/DataUpdate_SQL.xml"></sqlMap>
+</sqlMapConfig>
+ 

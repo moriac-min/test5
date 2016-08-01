@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="SmartUpdaterDAO">
+
+	<typeAlias  alias="EgovMap" type="egovframework.rte.psl.dataaccess.util.EgovMap"/>
+ 	<!-- 미들웨어 서버 목록 -->
+ 	<select id="SmartUpdaterDAO.selectReceiveServerList" resultClass="EgovMap">
+select
+	cntc_server_ip
+,	cntc_server_port_no
+from
+	tb_imw_mdwr_server t_a
+where
+	t_a.cntc_server_use_at = 'Y'
+and	t_a.cntc_server_se_code = '01'
+order by
+	cntc_server_id
+ 	</select>
+ 	
+ 	<select id="SmartUpdaterDAO.selectFinalMiddleware" resultClass="EgovMap">
+select 
+/*+ INDEX_DESC(t_a PK_TB_IMW_MDWR)*/
+	mdwr_ver_id
+,	#url# || mdwr_dwld_cours mdwr_dwld_cours
+,	mdwr_file_size
+from
+	tb_imw_mdwr t_a
+where 
+	mdwr_wdtb_date &lt;= sysdate
+and	mdwr_othbc_at = 'Y'
+and rownum =1
+ 	</select>
+ 	
+</sqlMap>

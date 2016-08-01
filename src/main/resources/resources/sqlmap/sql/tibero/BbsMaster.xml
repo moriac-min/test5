@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+
+
+<sqlMap namespace="BbsMaster">
+	<typeAlias alias="bbsMasterVO" type="kr.or.kpetro.std.service.BbsMasterVO"/>
+	<select id="bbsMasterDAO.selectBbsMaster" parameterClass="string" resultClass="bbsMasterVO">
+		<![CDATA[
+			SELECT BBS_ID bbsId,
+			       BBS_NM bbsNm,
+			       BBS_INTRCN ,
+			       BBS_TY_CODE ,
+			       REPLY_POSBL_AT ,
+			       ANSWER_AT ,
+			       FILE_ATCH_POSBL_AT ,
+			       ATCH_POSBL_FILE_NUMBER atchPosblFileNumber,
+			       ATCH_POSBL_FILE_SIZE ,
+			       USE_AT
+			  FROM COMTNBBSMASTER
+			 WHERE BBS_ID = #bbsId#
+		]]>				
+	</select>  
+</sqlMap>
+
+

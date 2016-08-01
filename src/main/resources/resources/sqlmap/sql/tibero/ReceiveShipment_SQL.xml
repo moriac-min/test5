@@ -1,0 +1,422 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="ReceiveShipmentDAO">
+
+	<typeAlias  alias="CollectServerFileVO" type="kr.or.kpetro.svr.mdwr.spdmd.service.CollectServerFileVO"/>
+	<typeAlias  alias="BusinessPlaceLicenseVO" type="kr.or.kpetro.svr.service.BusinessPlaceLicenseVO"/>
+	<typeAlias  alias="SpldmdReportFxVO" type="kr.or.kpetro.svr.mdwr.spdmd.service.SpldmdReportFxVO"/>
+	<typeAlias  alias="SpldmdReportCardVO" type="kr.or.kpetro.svr.mdwr.spdmd.service.SpldmdReportCardVO"/>
+	<typeAlias  alias="StyleCardIemVO" type="kr.or.kpetro.svr.mdwr.spdmd.service.StyleCardIemVO"/>
+	<typeAlias  alias="SpldmdReportStyleVO" type="kr.or.kpetro.svr.mdwr.spdmd.service.SpldmdReportStyleVO"/>
+	<typeAlias  alias="SystemCodeVO" type="kr.or.kpetro.svr.mdwr.init.service.SystemCodeVO"/>
+	<typeAlias  alias="SpldmdReportLineVO" type="kr.or.kpetro.svr.mdwr.spdmd.service.SpldmdReportLineVO"/>
+	
+	<parameterMap id="paramMap" class="java.util.HashMap" >
+  <parameter property="pCOLCT_YEAR" jdbcType="VARCHAR" javaType="java.lang.String" mode="IN" />
+  <parameter property="pCOLCT_FILE_NO" jdbcType="INTEGER" javaType="java.lang.Integer" mode="IN" />
+  <parameter property="pERR_NUM" jdbcType="INTEGER" javaType="java.lang.String"  mode="OUT" />
+  <parameter property="pERR_LINE_NO" jdbcType="INTEGER" javaType="java.lang.Integer"  mode="OUT" />
+  <parameter property="pERR_DESC" jdbcType="VARCHAR" javaType="java.lang.String"  mode="OUT" />
+ </parameterMap>
+	
+ 	<select id="ReceiveShipmentDAO.selectReportFileInfo" resultClass="SpldmdReportStyleVO">
+select
+	t_a.*
+,	t_b.report_style_ver_sn reportStyleVerSn
+from
+(
+select 
+	a.report_year reportYear
+,	a.report_wkno reportWkno
+, 	a.report_pd_begin_day reportPdBeginDay
+,	a.report_pd_end_day reportPdEndDay
+,	a.report_tme_id reportTmeId
+,	a.spldmd_report_clos_day spldmdReportClosDay
+,	(
+		select 
+			max(b.appl_report_tme_id||report_style_ver_sn)
+		from 
+			tb_imw_spldmd_report_style b
+		where
+			b.appl_report_tme_id &lt;= a.report_tme_id
+		and	b.report_style_se_code = #reportStyleSeCode#
+		and	b.report_style_use_at = 'Y'
+	) reportStyleApplDate
+from tb_imw_spldmd_report_fx a
+where 
+	a.report_wkno_use_at = 'Y'
+<iterate property="reportList" open="and (" close=")" conjunction=") or (">
+a.report_pd_begin_day = #reportList[].reportPdBeginDay# and report_pd_end_day = #reportList[].reportPdEndDay#
+</iterate>
+)t_a
+,	tb_imw_spldmd_report_style t_b
+where
+	t_a.reportStyleApplDate = t_b.appl_report_tme_id || t_b.report_style_ver_sn
+and	t_b.report_style_se_code = #reportStyleSeCode#
+and t_b.report_style_use_at = 'Y'
+ 	</select>
+        
+ 	<select id="ReceiveShipmentDAO.selectReportCardList" parameterClass="SpldmdReportCardVO" resultClass="SpldmdReportCardVO">
+ select 
+	b.report_style_card_no reportStyleCardNo
+,	b.report_style_card_nm reportStyleCardNm
+,	b.report_style_se_code reportStyleSeCode
+,	b.report_style_ver_sn reportStyleVerSn
+,	b.singl_row_at singlRowAt
+,	b.line_data_byte_lt lineDataByteLt
+,	b.opert_table_nm opertTableNm
+from 
+	tb_imw_spldmd_report_style a
+inner join
+	TB_IMW_SPLDMD_REPORT_CARD b
+on	a.report_style_se_code = b.report_style_se_code
+and	a.report_style_ver_sn = b.report_style_ver_sn
+where
+		a.report_style_se_code = #reportStyleSeCode#
+and	a.report_style_ver_sn = #reportStyleVerSn#
+order by
+	b.report_style_card_no
+ 	</select>
+ 	
+ 	<select id="ReceiveShipmentDAO.selectReportItemList" parameterClass="SpldmdReportCardVO" resultClass="StyleCardIemVO">
+select 
+	b.report_style_card_no reportStyleCardNo
+,	c.style_card_iem_sn styleCardIemSn
+,	c.style_card_iem_ordr styleCardIemOrdr
+,	c.style_card_iem_nm styleCardIemNm
+,	c.style_card_iem_byte_lt styleCardIemByteLt
+,	c.iem_updt_posbl_at iemUpdtPosblAt
+,	c.iem_data_ty_code iemDataTyCode
+,	c.iem_choise_group_code_nm iemChoiseGroupCodeNm
+,	c.iem_postng_ty_code iemPostngTyCode
+,	c.iem_dcml_cphr iemDcmlCphr
+,	c.iem_readng_at iemReadngAt
+,	c.style_card_column_nm styleCardColumnNm
+,	c.iem_readng_ordr iemReadngOrdr
+,	c.IEM_DATA_ESSNTL_AT iemDataEssntlAt
+,	c.IEM_DATA_INDICT_LT iemDataIndictLt
+from 
+	tb_imw_spldmd_report_style a
+inner join
+	TB_IMW_SPLDMD_REPORT_CARD b
+on	a.report_style_se_code = b.report_style_se_code
+and	a.report_style_ver_sn = b.report_style_ver_sn
+inner join
+	tb_imw_style_card_iem c
+on	b.report_style_se_code = c.report_style_se_code
+and b.report_style_ver_sn = c.report_style_ver_sn
+and	b.report_style_card_no = c.report_style_card_no
+where
+	a.report_style_se_code = #reportStyleSeCode#
+and	a.report_style_ver_sn = #reportStyleVerSn#
+order by
+	b.report_style_card_no 	
+,	c.style_card_iem_ordr
+ 	</select>
+
+<select id="ReceiveShipmentDAO.selectReportStyle" resultClass="SpldmdReportStyleVO">
+select
+	T_A.REPORT_YEAR reportYear
+,	T_A.REPORT_WKNO reportWkno
+,	t_b.report_style_ver_sn reportStyleVerSn
+from
+(
+select 
+	A.REPORT_YEAR
+,	A.REPORT_WKNO
+,	(
+		select max(b.appl_report_tme_id || report_style_ver_sn)
+		from 
+			tb_imw_spldmd_report_style b
+		where
+			b.appl_report_tme_id &lt; a.report_tme_id
+		and	b.report_style_se_code =#reportStyleSeCode#  
+		and	b.report_style_use_at = 'Y'
+	) reportStyleApplDate
+from tb_imw_spldmd_report_fx a
+where 
+	a.report_wkno_use_at = 'Y'
+and	a.report_tme_id = #reportTmeId#
+)T_A
+,	tb_imw_spldmd_report_style t_b
+where
+	t_a.reportStyleApplDate = t_b.appl_report_tme_id || t_b.report_style_ver_sn
+and	t_b.report_style_se_code = #reportStyleSeCode#
+ 	</select>
+ 	
+ 	<insert id="ReceiveShipmentDAO.saveCollectServerFile"  parameterClass="CollectServerFileVO">
+ 		<selectKey resultClass="int" keyProperty="colctFileNo">
+ 		select nvl(max(COLCT_FILE_NO),0)+1 from 
+ 		(
+			select
+				/*+ INDEX_DESC(t_a PK_TB_IMW_COLCT_SERVER_FILE)*/COLCT_FILE_NO
+			from
+				TB_IMW_COLCT_SERVER_FILE t_a
+			where
+				t_a.colct_year = #colctYear#
+			and rownum = 1
+		)
+		</selectKey>
+		/*ReceiveShipmentDAO.saveCollectServerFile*/
+		insert into TB_IMW_COLCT_SERVER_FILE
+		(
+			COLCT_YEAR,
+			COLCT_FILE_NO,
+			CNTC_SERVER_ID,
+			REPORT_TME_ID,
+			BPLC_ID,
+			REPORT_STYLE_SE_CODE,
+			REPORT_STYLE_VER_SN,
+			RECPTN_COURS_SE_CODE,
+			COLCT_FILE_STRE_COURS,
+			COLCT_FILE_NM,
+			COLCT_FILE_SIZE,
+			LINE_CO,
+			COLCT_PROCESS_STTUS_CODE,
+			COLCT_FILE_PROCESS_DATE,
+			COLCT_PROCESS_ERROR_CN,
+			REGISTER_ID,
+			REGIST_DATE,
+			REGIST_IP,
+			LAGREE_SN
+		)
+		values
+		(
+			#colctYear#,
+			#colctFileNo#,
+			#cntcServerId#,
+			#reportTmeId#,
+			#bplcId#,
+			#reportStyleSeCode#,
+			#reportStyleVerSn#,
+			#recptnCoursSeCode#,
+			#colctFileStreCours#,
+			#colctFileNm#,
+			#colctFileSize#,
+			#lineCo#,
+			#colctProcessSttusCode#,
+			sysdate,
+			#colctProcessErrorCn#,
+			#userId#,
+			sysdate,
+			#userIp#,
+			#lagreeSn#
+		)
+ 	</insert>
+ 	
+ 	<insert id="ReceiveShipmentDAO.saveTransferReport">
+ 	<![CDATA[
+ 	declare begin
+ 	]]>
+ 	<iterate property="lineList">
+	 	insert into tb_imw_spldmd_report_line
+		(
+			COLCT_YEAR,
+			COLCT_FILE_NO,
+			LINE_NO,
+			REPORT_STYLE_SE_CODE,
+			REPORT_STYLE_VER_SN,
+			REPORT_STYLE_CARD_NO,
+			LINE_DATA_VALUE,
+			LINE_DATA_STTUS_CODE,
+			LINE_DATA_PROCESS_DATE,
+			LINE_DATA_ERROR_CN
+		)
+		values
+		(
+			#colctYear#,
+			#colctFileNo#,
+			#lineList[].lineNo#,
+			#lineList[].cardvo.reportStyleSeCode#,
+			#lineList[].cardvo.reportStyleVerSn#,
+			#lineList[].cardvo.reportStyleCardNo#,
+			#lineList[].lineDataValue#,
+			#lineList[].lineDataSttusCode#,
+			sysdate,
+			#lineList[].lineDataErrorCn#
+		)
+		;
+	</iterate>
+	<![CDATA[ end; ]]>
+ 	</insert>
+ 	
+ 	
+ 	<insert id="ReceiveShipmentDAO.saveTransferReportOriginal">
+ 	<![CDATA[
+ 	declare begin
+ 	]]>
+ 	<iterate property="lineList">
+			insert into $lineList[].cardvo.opertTableNm$
+			(
+				colct_year
+			,	colct_file_no
+			,	line_no
+			<iterate property="lineList[].itemList">
+			,	$lineList[].itemList[].styleCardColumnNm$
+			</iterate>
+			)
+			values
+			(
+				#colctYear#
+			,	#colctFileNo#
+			,	#lineList[].lineNo#
+			<iterate property="lineList[].itemList">
+			,	#lineList[].itemList[].itemValue#
+			</iterate>
+			)
+			;
+	</iterate>
+	<![CDATA[ end; ]]>
+ 	</insert>
+ 	
+ 	<!-- 수급보고현황 조회대상 연도조회 -->
+ 	<select id="ReceiveShipmentDAO.selectReportYear" parameterClass="BusinessPlaceLicenseVO" resultClass="SpldmdReportFxVO">
+ /*ReceiveShipmentDAO.selectReportYear*/
+select
+	distinct(report_year) reportYear
+from
+	tb_imw_spldmd_report_fx t_a
+where
+	report_wkno_use_at = 'Y'
+and exists (select 'x' from tb_imw_colct_server_file t_b where t_b.report_tme_id = t_a.report_tme_id and t_b.bplc_id =#bplcId#)
+ 	</select>
+ 	
+ 	<!-- 수급보고현황 갯수 조회 -->
+ 	<select id="ReceiveShipmentDAO.selectReportCount" parameterClass="BusinessPlaceLicenseVO" resultClass="Integer">
+ 	select 
+		count(*)
+	from
+		tb_imw_colct_server_file t_a
+	inner join
+		tb_imw_spldmd_report_fx t_b
+	on	t_a.report_tme_id = t_b.report_tme_id
+	where
+		t_a.bplc_id =#bplcId#
+ 	</select>
+ 	
+ 	<!-- 수급보고현황 목록 조회 -->
+ 	<select id="ReceiveShipmentDAO.selectReportList" parameterClass="BusinessPlaceLicenseVO" resultClass="CollectServerFileVO">
+select 
+	s2.colctYear
+,	s2.colctFileNo
+,	s2.reportYear
+,	s2.reportWkno
+,	s2.reportPdBeginDay
+,	s2.reportPdEndDay
+,	s2.spldmdReportClosDay
+,	s2.colctProcessErrorCn
+,	s2.colctFileProcessDate
+,	decode(s2.colctProcessSttusCode, '31', '등록완료', '등록오류') colctProcessSttusNm
+,	null recptnCoursSeCode
+,	s2.colctProcessSttusCode
+from 
+(
+		select 
+			rownum rnum
+		,	s1.*
+		from 
+		(	
+		 select 
+			t_a.colct_year colctYear
+		,	t_a.colct_file_no colctFileNo
+		,	t_b.report_year reportYear
+		,	t_b.report_wkno reportWkno
+		,	t_b.report_pd_begin_day reportPdBeginDay
+		,	t_b.report_pd_end_day reportPdEndDay
+		,	t_b.spldmd_report_clos_day spldmdReportClosDay
+		,	t_a.colct_process_sttus_code colctProcessSttusCode
+		,	t_a.colct_process_error_cn colctProcessErrorCn
+		,	t_a.colct_file_process_date colctFileProcessDate
+		from
+			tb_imw_colct_server_file t_a
+		inner join
+			tb_imw_spldmd_report_fx t_b
+		on	t_a.report_tme_id = t_b.report_tme_id
+		where
+			t_a.bplc_id =#bplcId#
+		<isNotEmpty prepend="and" property="srchWord">
+			t_b.report_year = #srchWord#
+		</isNotEmpty>
+		order by
+			t_a.colct_year desc
+		,	t_a.colct_file_no desc
+		)s1
+			where rownum &lt;=  #findex# + #ppage#
+)s2
+where rnum &gt;= #findex# + 1
+ 	</select>
+ 	
+ 	<!-- 수급보고현황 목록 조회 -->
+ 	<select id="ReceiveShipmentDAO.selectReportData" parameterClass="CollectServerFileVO" resultClass="SpldmdReportLineVO">
+SELECT 
+	A.LINE_DATA_VALUE lineDataValue
+,	A.REPORT_STYLE_VER_SN reportStyleVerSn
+,	B.COLCT_FILE_PROCESS_DATE colctFileProcessDate
+,	B.COLCT_PROCESS_ERROR_CN colctProcessErrorCn
+,	DECODE(B.COLCT_PROCESS_STTUS_CODE, '31', '등록완료', '등록오류') colctProcessSttusNm
+FROM 
+	TB_IMW_SPLDMD_REPORT_LINE A
+INNER JOIN
+	TB_IMW_COLCT_SERVER_FILE B
+ON	A.COLCT_YEAR = B.COLCT_YEAR
+AND	A.COLCT_FILE_NO	= B.COLCT_FILE_NO
+WHERE 
+	A.COLCT_YEAR = #colctYear#
+AND	A.COLCT_FILE_NO = #colctFileNo#
+ 	</select>
+<!-- 보고회차 년도조회 -->	
+<select id="ReceiveShipmentDAO.selectReportYearList"  resultClass="SpldmdReportFxVO">
+select 
+	distinct(report_year) reportYear
+from 
+	tb_imw_spldmd_report_fx
+where
+	report_wkno_use_at = 'Y'
+</select>
+<!-- 보고회차 목록 -->
+<select id="ReceiveShipmentDAO.selectReportSchedule" parameterClass="SpldmdReportFxVO" resultClass="SpldmdReportFxVO">
+select 
+	report_year reportYear
+,	report_wkno reportWkno
+,	report_pd_begin_day reportPdBeginDay
+,	report_pd_end_day reportPdEndDay
+,	spldmd_report_clos_day spldmdReportClosDay
+,	spldmd_report_last_clos_day spldmdReportLastClosDay
+from
+	tb_imw_spldmd_report_fx
+where
+ 	report_year =  #reportYear#
+	<isNotNull property="srchWord">
+and lpad(report_mt, 2, '0') = #srchWord#
+	</isNotNull>
+and report_wkno_use_at = 'Y'
+
+</select>
+
+<update id="ReceiveShipmentDAO.updateCollectServerFile">
+update TB_IMW_COLCT_SERVER_FILE set
+	COLCT_PROCESS_STTUS_CODE = #colctProcessSttusCode#
+,	COLCT_FILE_PROCESS_DATE = sysdate
+,	COLCT_PROCESS_ERROR_CN = #colctProcessErrorCn#
+where
+	COLCT_YEAR = #colctYear#
+and	COLCT_FILE_NO = #colctFileNo#
+</update>
+
+<update id="ReceiveShipmentDAO.updateTransferReport">
+UPDATE TB_IMW_SPLDMD_REPORT_LINE SET
+	LINE_DATA_STTUS_CODE = #lineDataSttusCode#
+,	LINE_DATA_PROCESS_DATE = sysdate
+,	LINE_DATA_ERROR_CN = #lineDataErrorCn#
+WHERE
+	COLCT_YEAR = #colctYear#
+AND	COLCT_FILE_NO = #colctFileNo#
+AND	LINE_NO =  #lineNo#	
+</update>
+
+ <procedure id="ReceiveShipmentDAO.saveTransferReportValidation"  parameterMap="paramMap">
+    {call UP_IMW_SPLDMD_REPORT_VALID(?,?,?,?,?) }
+  </procedure>
+
+</sqlMap>

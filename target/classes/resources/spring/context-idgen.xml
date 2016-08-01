@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+	
+<!-- 
+	수정일      수정자                          수정내용
+  =========     =======    =================================================
+  2011.09.21    서준식          NTT_ID 에대한 IDGEN서비스 등록
+  2011.10.18    서준식          StsfdgNo 에대한 IDGEN서비스 등록
+ 				            	AnswerNo 에대한 IDGEN서비스 등록
+  2013.09.03    이기하          blockSize값 10으로 변경
+-->
+	<!-- System Log... START-->			
+	<bean name="egovSysLogIdGnrService" class="egovframework.rte.fdl.idgnr.impl.EgovTableIdGnrService" destroy-method="destroy">
+		<property name="dataSource" ref="egov.dataSource" />
+		<property name="strategy"   ref="sysLogStrategy" />
+		<property name="blockSize"  value="10"/>
+		<property name="table"	   	value="COMTECOPSEQ"/>
+		<property name="tableName"	value="SYSLOG_ID"/>
+	</bean>
+	<bean name="sysLogStrategy" class="egovframework.rte.fdl.idgnr.impl.strategy.EgovIdGnrStrategyImpl">
+		<property name="prefix"   value="MDWLOG_" />
+		<property name="cipers"   value="13" />
+		<property name="fillChar" value="0" />
+	</bean>		
+	<!-- System Log... END-->		
+</beans>
